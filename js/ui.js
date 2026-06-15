@@ -1,11 +1,117 @@
 // ============================================================
 // AXIOM REACH-HUB - UI CONTROLLER v1.0
-// Con Three.js, TensorFlow.js, Transformers.js
+// CON Three.js, Transformers.js, TensorFlow.js
 // ============================================================
 
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { pipeline } from '@xenova/transformers';
+
+// ---------- THREE.JS - FONDO 3D ----------
+let scene, camera, renderer, particles;
+let threeInitialized = false;
+
+function initThree() {
+    if (threeInitialized) return;
+    const container = document.getElementById('three-container');
+    if (!container) return;
+    
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    renderer = new THREE.WebGLRenderer({ alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x000000, 0);
+    container.appendChild(renderer.domElement);
+    
+    // Crear partículas flotantes (datos)
+    const geometry = new THREE.BufferGeometry();
+    const particleCount = 2000;
+    const positions = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount; i++) {
+        positions[i*3] = (Math.random() - 0.5) * 200;
+        positions[i*3+1] = (Math.random() - 0.5) * 100;
+        positions[i*3+2] = (Math.random() - 0.5) * 100 - 50;
+    }
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    
+    const material = new THREE.PointsMaterial({ color: 0x00e5ff, size: 0.15, transparent: true, opacity: 0.4 });
+    particles = new THREE.Points(geometry, material);
+    scene.add(particles);
+    
+    // Partículas de datos que fluyen (segundo sistema)
+    const geometry2 = new THREE.BufferGeometry();
+    const particleCount2 = 1000;
+    const positions2 = new Float32Array(particleCount2 * 3);
+    for (let i = 0; i < particleCount2; i++) {
+        positions2[i*3] = (Math.random() - 0.5) * 150;
+        positions2[i*3+1] = (Math.random() - 0.5) * 80;
+        positions2[i*3+2] = (Math.random() - 0.5) * 150 - 30;
+    }
+    geometry2.setAttribute('position', new THREE.BufferAttribute(positions2, 3));
+    const material2 = new THREE.PointsMaterial({ color: 0x9b51e0, size: 0.1, transparent: true, opacity: 0.3 });
+    const particles2 = new THREE.Points(geometry2, material2);
+    scene.add(particles2);
+    
+    camera.position.z = 50;
+    
+    function animate() {
+        requestAnimationFrame(animate);
+        if (particles) particles.rotation.y += 0.002;
+        if (particles2) particles2.rotation.x += 0.001;
+        renderer.render(scene, camera);
+    }
+    animate();
+    
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    
+    threeInitialized = true;
+    console.log('✅ Three.js inicializado');
+}
+
+// ---------- TRANSFORMERS.JS - RESUMEN IA ----------
+let summarizer = null;
+let summarizerLoading = false;
+
+async function loadSummarizer() {
+    if (summarizer || summarizerLoading) return;
+    summarizerLoading = true;
+    const progressBar = document.getElementById('summaryProgress');
+    const summaryTextEl = document.getElementById('summaryText');
+    if (progressBar) progressBar.style.display = 'block';
+    if (summaryTextEl) summaryTextEl.innerText = 'Cargando modelo de IA... (1ª vez puede tardar)';
+    
+    try {
+        summarizer = await pipeline('summarization', 'Xenova/distilbart-cnn-12-6');
+        if (progressBar) progressBar.style.display = 'none';
+        if (summaryTextEl) summaryTextEl.innerText = 'Modelo listo. Los resultados se resumirán automáticamente.';
+        console.log('✅ Transformers.js summarizer cargado');
+    } catch(e) {
+        console.error('Error cargando summarizer:', e);
+        if (summaryTextEl) summaryTextEl.innerText = 'Resumen no disponible (error de carga)';
+        if (progressBar) progressBar.style.display = 'none';
+    }
+    summarizerLoading = false;
+}
+
+async function generateSummary(texts) {
+    if (!summarizer) {
+        await loadSummarizer();
+        if (!summarizer) return "Modelo de IA no disponible. Recarga la página.";
+    }
+    const fullText = texts.join('. ').substring(0, 1000);
+    if (fullText.length < 50) return "Texto insuficiente para resumir.";
+    
+    try {
+        const result = await summarizer(fullText, { max_length: 100, min_length: 30 });
+        return result[0].summary_text;
+    } catch(e) {
+        console.error('Error generando resumen:', e);
+        return "Error generando resumen.";
+    }
+}
 
 // ---------- DOM Elements ----------
 const searchInput = document.getElementById('searchInput');
@@ -34,131 +140,54 @@ let totalItems = 0;
 let sourceCounts = { twitter: 0, reddit: 0, github: 0, iptv: 0, hn: 0, arxiv: 0 };
 let searchHistory = JSON.parse(localStorage.getItem('reachhub_history') || '[]');
 let achievements = JSON.parse(localStorage.getItem('reachhub_achievements') || '[]');
-let streak = parseInt(localStorage.getItem('reachhub_streak') || '0');
-let lastDate = localStorage.getItem('reachhub_lastDate');
 
 // ---------- Datasets simulados ----------
 const datasets = {
     twitter: [
-        { title: "Nuevo modelo de IA supera a GPT-4", content: "Investigadores presentan arquitectura revolucionaria con 1M de contexto...", url: "#", author: "@aiscientist" },
-        { title: "Rust 2026: Lo que viene en el nuevo release", content: "Mejoras en compilación asíncrona y nuevo borrow checker...", url: "#", author: "@rustlang" },
-        { title: "Seguridad en IA: El nuevo estándar NIST", content: "Guías para implementar sistemas de IA seguros y confiables...", url: "#", author: "@NIST" }
+        { title: "Nuevo modelo de IA supera a GPT-4", content: "Investigadores presentan arquitectura revolucionaria con 1M de contexto. Los resultados superan todas las expectativas.", url: "#", author: "@aiscientist" },
+        { title: "Rust 2026: Lo que viene en el nuevo release", content: "Mejoras en compilación asíncrona y nuevo borrow checker. La comunidad está entusiasmada.", url: "#", author: "@rustlang" },
+        { title: "Seguridad en IA: El nuevo estándar NIST", content: "Guías para implementar sistemas de IA seguros y confiables. Obligatorio para empresas.", url: "#", author: "@NIST" }
     ],
     reddit: [
-        { title: "AMA con el equipo de Anthropic", content: "Preguntas y respuestas sobre Claude 4 y seguridad en IA...", subreddit: "r/MachineLearning", score: 2456 },
-        { title: "Mi experiencia con Local LLMs", content: "Guía para ejecutar modelos de 70B en una GPU de 24GB...", subreddit: "r/LocalLLaMA", score: 1892 },
-        { title: "Discusión sobre AGI", content: "¿Estamos más cerca de la inteligencia artificial general?", subreddit: "r/singularity", score: 3421 }
+        { title: "AMA con el equipo de Anthropic", content: "Preguntas y respuestas sobre Claude 4 y seguridad en IA. Muy interesante la sección de preguntas.", subreddit: "r/MachineLearning", score: 2456 },
+        { title: "Mi experiencia con Local LLMs", content: "Guía para ejecutar modelos de 70B en una GPU de 24GB. Resultados sorprendentes.", subreddit: "r/LocalLLaMA", score: 1892 },
+        { title: "Discusión sobre AGI", content: "¿Estamos más cerca de la inteligencia artificial general? Debate muy interesante.", subreddit: "r/singularity", score: 3421 }
     ],
     github: [
-        { title: "llama.cpp", content: "Inferencia de LLMs en CPU, 15k+ estrellas esta semana...", stars: 15200, language: "C++" },
-        { title: "transformers.js", content: "Transformers en el navegador, nueva versión 4.2.0...", stars: 8900, language: "JavaScript" },
-        { title: "axum", content: "Framework web para Rust, tendencia en backend...", stars: 5600, language: "Rust" }
+        { title: "llama.cpp", content: "Inferencia de LLMs en CPU, 15k+ estrellas esta semana. Muy activo el repositorio.", stars: 15200, language: "C++" },
+        { title: "transformers.js", content: "Transformers en el navegador, nueva versión 4.2.0. Ahora con más modelos.", stars: 8900, language: "JavaScript" },
+        { title: "axum", content: "Framework web para Rust, tendencia en backend. Muy bien documentado.", stars: 5600, language: "Rust" }
     ],
     iptv: [
-        { title: "Live: AI Conference 2026", content: "Streaming en vivo de la conferencia principal...", viewers: "12.5k", quality: "4K" },
-        { title: "Tutorial: Construye tu propio agente IA", content: "Stream en vivo con código en Rust...", viewers: "3.2k", quality: "HD" },
-        { title: "Debate: Ética en IA", content: "Panel de expertos discutiendo regulaciones...", viewers: "8.7k", quality: "HD" }
+        { title: "Live: AI Conference 2026", content: "Streaming en vivo de la conferencia principal. Participan los mejores expertos.", viewers: "12.5k", quality: "4K" },
+        { title: "Tutorial: Construye tu propio agente IA", content: "Stream en vivo con código en Rust. Aprende desde cero.", viewers: "3.2k", quality: "HD" },
+        { title: "Debate: Ética en IA", content: "Panel de expertos discutiendo regulaciones. Muy interesante.", viewers: "8.7k", quality: "HD" }
     ],
     hn: [
-        { title: "Show HN: Framework de agentes autónomos", content: "Nueva herramienta para orquestar agentes de IA...", score: 567, comments: 89 },
-        { title: "La evolución de WebAssembly", content: "Análisis del estado actual y futuro de WASM...", score: 423, comments: 56 },
-        { title: "OpenAI anuncia nueva API", content: "Reducción de precios y nuevos modelos...", score: 892, comments: 234 }
+        { title: "Show HN: Framework de agentes autónomos", content: "Nueva herramienta para orquestar agentes de IA. Código abierto.", score: 567, comments: 89 },
+        { title: "La evolución de WebAssembly", content: "Análisis del estado actual y futuro de WASM. Muy completo.", score: 423, comments: 56 },
+        { title: "OpenAI anuncia nueva API", content: "Reducción de precios y nuevos modelos. Impacto en la industria.", score: 892, comments: 234 }
     ],
     arxiv: [
-        { title: "Attention Is All You Need Revisited", content: "Nuevo paper sobre arquitecturas transformer...", authors: "Vaswani et al.", date: "2026-06-10" },
-        { title: "RAG con memoria a largo plazo", content: "Mejoras en sistemas de recuperación aumentada...", authors: "Chen et al.", date: "2026-06-09" },
-        { title: "Eficiencia energética en LLMs", content: "Métodos para reducir consumo en inferencia...", authors: "Zhang et al.", date: "2026-06-08" }
+        { title: "Attention Is All You Need Revisited", content: "Nuevo paper sobre arquitecturas transformer. Mejoras significativas.", authors: "Vaswani et al.", date: "2026-06-10" },
+        { title: "RAG con memoria a largo plazo", content: "Mejoras en sistemas de recuperación aumentada. Resultados prometedores.", authors: "Chen et al.", date: "2026-06-09" },
+        { title: "Eficiencia energética en LLMs", content: "Métodos para reducir consumo en inferencia. Hasta 40% de ahorro.", authors: "Zhang et al.", date: "2026-06-08" }
     ]
 };
 
-// ---------- Three.js Setup ----------
-let scene, camera, renderer, particles;
-let threeInitialized = false;
-
-function initThree() {
-    if (threeInitialized) return;
-    const container = document.createElement('div');
-    container.style.position = 'fixed';
-    container.style.top = '0';
-    container.style.left = '0';
-    container.style.width = '100%';
-    container.style.height = '100%';
-    container.style.zIndex = '0';
-    container.style.pointerEvents = 'none';
-    document.body.insertBefore(container, document.body.firstChild);
-    
-    scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    renderer = new THREE.WebGLRenderer({ alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(0x000000, 0);
-    container.appendChild(renderer.domElement);
-    
-    const geometry = new THREE.BufferGeometry();
-    const particleCount = 2000;
-    const positions = new Float32Array(particleCount * 3);
-    for (let i = 0; i < particleCount; i++) {
-        positions[i*3] = (Math.random() - 0.5) * 200;
-        positions[i*3+1] = (Math.random() - 0.5) * 100;
-        positions[i*3+2] = (Math.random() - 0.5) * 100 - 50;
-    }
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    const material = new THREE.PointsMaterial({ color: 0x00e5ff, size: 0.2, transparent: true, opacity: 0.5 });
-    particles = new THREE.Points(geometry, material);
-    scene.add(particles);
-    
-    camera.position.z = 50;
-    
-    function animate() {
-        requestAnimationFrame(animate);
-        if (particles) {
-            particles.rotation.y += 0.002;
-            particles.rotation.x += 0.001;
-        }
-        renderer.render(scene, camera);
-    }
-    animate();
-    threeInitialized = true;
-}
-
-// ---------- TensorFlow.js Sentiment ----------
-let sentimentModel = null;
-async function loadSentimentModel() {
-    try {
-        sentimentModel = await tf.loadLayersModel('https://storage.googleapis.com/tfjs-models/tfjs/sentiment_cnn_v1/model.json');
-        console.log('Modelo de sentimiento cargado');
-    } catch(e) { console.log('Modelo no disponible, usando simulación'); }
-}
-loadSentimentModel();
-
-// ---------- Transformers.js Summarization ----------
-let summarizer = null;
-async function loadSummarizer() {
-    try {
-        summarizer = await pipeline('summarization', 'Xenova/distilbart-cnn-12-6');
-        console.log('Summarizer cargado');
-    } catch(e) { console.log('Summarizer no disponible'); }
-}
-loadSummarizer();
-
-// ---------- Helper Functions ----------
 function getRandomItemFromSource(source, searchTerm) {
     const items = datasets[source];
     if (!items || items.length === 0) return null;
     const randomIndex = Math.floor(Math.random() * items.length);
-    const item = { ...items[randomIndex] };
-    item.title = item.title.replace(/LLM|IA|AI/g, match => match + ' ' + searchTerm.split(' ').slice(0,2).join(' '));
-    return item;
+    return { ...items[randomIndex] };
 }
 
 function formatResult(item, source, searchTerm) {
     let content = '';
-    let author = '';
     let meta = '';
     if (source === 'twitter') {
         content = item.content;
-        author = item.author;
-        meta = `🐦 ${author} · ${Math.floor(Math.random() * 100)} min`;
+        meta = `🐦 ${item.author} · ${Math.floor(Math.random() * 100)} min`;
     } else if (source === 'reddit') {
         content = item.content;
         meta = `📚 ${item.subreddit} · ⬆️ ${item.score}`;
@@ -226,11 +255,11 @@ function updateRadarChart() {
     ctx.strokeStyle = '#00e5ff';
     ctx.lineWidth = 2;
     ctx.stroke();
+    ctx.fillStyle = '#8E92A2';
+    ctx.font = '10px Inter';
     for (let i = 0; i < angles.length; i++) {
         const x = centerX + (radius + 15) * Math.cos(angles[i]);
         const y = centerY + (radius + 15) * Math.sin(angles[i]);
-        ctx.fillStyle = '#8E92A2';
-        ctx.font = '10px Inter';
         ctx.fillText(sources[i], x - 15, y - 5);
     }
 }
@@ -238,7 +267,6 @@ function updateRadarChart() {
 function updateActivityChart() {
     const ctx = activityChartCanvas.getContext('2d');
     ctx.clearRect(0, 0, activityChartCanvas.width, activityChartCanvas.height);
-    // Simulación simple de actividad
     ctx.fillStyle = '#00e5ff';
     for (let i = 0; i < 10; i++) {
         const height = Math.random() * 50;
@@ -251,20 +279,18 @@ function updateWordcloud() {
     const freq = {};
     words.forEach(w => { if(w.length > 3) freq[w] = (freq[w] || 0) + 1; });
     const sorted = Object.entries(freq).sort((a,b) => b[1] - a[1]).slice(0, 20);
-    wordcloudContainer.innerHTML = sorted.map(([word, count]) => `<span style="font-size: ${12 + count * 4}px; margin:4px; display:inline-block;">${word}</span>`).join('');
+    wordcloudContainer.innerHTML = sorted.map(([word, count]) => `<span style="font-size: ${12 + count * 4}px; margin:4px; display:inline-block; color: var(--accent-glow-1);">${word}</span>`).join('');
 }
 
-async function generateSummary() {
-    if (!summarizer || currentResults.length === 0) {
-        summaryText.innerText = currentResults.length > 0 ? "Resumen no disponible (modelo cargando...)" : "No hay resultados para resumir";
+async function updateSummary() {
+    if (currentResults.length === 0) {
+        summaryBox.classList.add('hidden');
         return;
     }
-    const texts = currentResults.map(r => r.content).join('. ').substring(0, 1000);
-    try {
-        const result = await summarizer(texts, { max_length: 100, min_length: 30 });
-        summaryText.innerText = result[0].summary_text;
-        summaryBox.classList.remove('hidden');
-    } catch(e) { summaryText.innerText = "Error generando resumen"; }
+    summaryBox.classList.remove('hidden');
+    const texts = currentResults.map(r => r.content);
+    const result = await generateSummary(texts);
+    summaryText.innerText = result;
 }
 
 function checkAchievements() {
@@ -282,10 +308,8 @@ function checkAchievements() {
         achievements.push(...newAchievements);
         localStorage.setItem('reachhub_achievements', JSON.stringify(achievements));
         renderAchievements();
-        newAchievements.forEach(() => {
-            achievementsContainer.classList.add('achievement-unlocked');
-            setTimeout(() => achievementsContainer.classList.remove('achievement-unlocked'), 500);
-        });
+        achievementsContainer.classList.add('achievement-unlocked');
+        setTimeout(() => achievementsContainer.classList.remove('achievement-unlocked'), 500);
     }
 }
 
@@ -359,8 +383,7 @@ function startExtraction() {
         activeSources.push(cb.dataset.source);
     });
     
-    let intervalCount = 0;
-    extractionInterval = setInterval(() => {
+    extractionInterval = setInterval(async () => {
         if (activeSources.length === 0) return;
         const randomSource = activeSources[Math.floor(Math.random() * activeSources.length)];
         const item = getRandomItemFromSource(randomSource, term);
@@ -371,11 +394,8 @@ function startExtraction() {
             sourceCounts[randomSource]++;
             updateStats();
             addResultCard(formatted);
-            if (currentResults.length === 1) generateSummary();
-            if (totalItems % 5 === 0) generateSummary();
+            await updateSummary();
         }
-        intervalCount++;
-        if (intervalCount > 50) stopExtraction();
     }, speed);
 }
 
@@ -384,19 +404,6 @@ function stopExtraction() {
     isExtracting = false;
     searchBtn.style.display = 'inline-block';
     cancelBtn.style.display = 'none';
-    generateSummary();
-    updateStreak();
-}
-
-function updateStreak() {
-    const today = new Date().toDateString();
-    if (lastDate !== today) {
-        if (lastDate === new Date(Date.now() - 86400000).toDateString()) streak++;
-        else streak = 1;
-        lastDate = today;
-        localStorage.setItem('reachhub_streak', streak);
-        localStorage.setItem('reachhub_lastDate', lastDate);
-    }
 }
 
 // ---------- Export Functions ----------
@@ -445,8 +452,11 @@ if (SpeechRecognition) {
         startExtraction();
     };
 } else {
-    document.getElementById('voiceBtn').style.opacity = '0.5';
-    document.getElementById('voiceBtn').title = 'Web Speech API no soportada';
+    const voiceBtn = document.getElementById('voiceBtn');
+    if (voiceBtn) {
+        voiceBtn.style.opacity = '0.5';
+        voiceBtn.title = 'Web Speech API no soportada';
+    }
 }
 
 // ---------- Event Listeners ----------
@@ -492,7 +502,7 @@ themeToggle.addEventListener('click', () => {
 document.getElementById('kioskBtn').onclick = () => document.documentElement.requestFullscreen();
 
 // Tutorial
-document.getElementById('tourBtn').onclick = () => alert('🔍 Tutorial:\n1. Introduce un término de búsqueda\n2. Selecciona las fuentes\n3. Haz clic en EXTRaer\n4. Los resultados aparecerán en tiempo real\n5. Exporta a MD/JSON o copia todo');
+document.getElementById('tourBtn').onclick = () => alert('🔍 Tutorial:\n1. Introduce un término de búsqueda\n2. Selecciona las fuentes\n3. Haz clic en EXTRaer\n4. Los resultados aparecerán en tiempo real\n5. IA resumirá automáticamente\n6. Exporta a MD/JSON o copia todo');
 
 // Inicialización
 function loadFromURL() {
@@ -506,7 +516,11 @@ function loadFromURL() {
     }
 }
 
+// Iniciar Three.js y cargar el modelo de IA
 initThree();
+loadSummarizer();
 renderAchievements();
 renderHistory();
 loadFromURL();
+
+console.log('✅ AXIOM REACH-HUB UI inicializado con Three.js y Transformers.js');
