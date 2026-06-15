@@ -1,13 +1,10 @@
 // ============================================================
 // AXIOM REACH-HUB - UI CONTROLLER v1.0
-// CON Three.js, Transformers.js, TensorFlow.js
+// SIN DEPENDENCIAS EXTERNAS QUE ROMPAN
 // ============================================================
 
-import * as THREE from 'three';
-import { pipeline } from '@xenova/transformers';
-
-// ---------- THREE.JS - FONDO 3D ----------
-let scene, camera, renderer, particles;
+// ---------- THREE.JS ----------
+let scene, camera, renderer, particles, particles2;
 let threeInitialized = false;
 
 function initThree() {
@@ -22,7 +19,6 @@ function initThree() {
     renderer.setClearColor(0x000000, 0);
     container.appendChild(renderer.domElement);
     
-    // Crear partículas flotantes (datos)
     const geometry = new THREE.BufferGeometry();
     const particleCount = 2000;
     const positions = new Float32Array(particleCount * 3);
@@ -32,12 +28,10 @@ function initThree() {
         positions[i*3+2] = (Math.random() - 0.5) * 100 - 50;
     }
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    
     const material = new THREE.PointsMaterial({ color: 0x00e5ff, size: 0.15, transparent: true, opacity: 0.4 });
     particles = new THREE.Points(geometry, material);
     scene.add(particles);
     
-    // Partículas de datos que fluyen (segundo sistema)
     const geometry2 = new THREE.BufferGeometry();
     const particleCount2 = 1000;
     const positions2 = new Float32Array(particleCount2 * 3);
@@ -48,7 +42,7 @@ function initThree() {
     }
     geometry2.setAttribute('position', new THREE.BufferAttribute(positions2, 3));
     const material2 = new THREE.PointsMaterial({ color: 0x9b51e0, size: 0.1, transparent: true, opacity: 0.3 });
-    const particles2 = new THREE.Points(geometry2, material2);
+    particles2 = new THREE.Points(geometry2, material2);
     scene.add(particles2);
     
     camera.position.z = 50;
@@ -68,49 +62,7 @@ function initThree() {
     });
     
     threeInitialized = true;
-    console.log('✅ Three.js inicializado');
-}
-
-// ---------- TRANSFORMERS.JS - RESUMEN IA ----------
-let summarizer = null;
-let summarizerLoading = false;
-
-async function loadSummarizer() {
-    if (summarizer || summarizerLoading) return;
-    summarizerLoading = true;
-    const progressBar = document.getElementById('summaryProgress');
-    const summaryTextEl = document.getElementById('summaryText');
-    if (progressBar) progressBar.style.display = 'block';
-    if (summaryTextEl) summaryTextEl.innerText = 'Cargando modelo de IA... (1ª vez puede tardar)';
-    
-    try {
-        summarizer = await pipeline('summarization', 'Xenova/distilbart-cnn-12-6');
-        if (progressBar) progressBar.style.display = 'none';
-        if (summaryTextEl) summaryTextEl.innerText = 'Modelo listo. Los resultados se resumirán automáticamente.';
-        console.log('✅ Transformers.js summarizer cargado');
-    } catch(e) {
-        console.error('Error cargando summarizer:', e);
-        if (summaryTextEl) summaryTextEl.innerText = 'Resumen no disponible (error de carga)';
-        if (progressBar) progressBar.style.display = 'none';
-    }
-    summarizerLoading = false;
-}
-
-async function generateSummary(texts) {
-    if (!summarizer) {
-        await loadSummarizer();
-        if (!summarizer) return "Modelo de IA no disponible. Recarga la página.";
-    }
-    const fullText = texts.join('. ').substring(0, 1000);
-    if (fullText.length < 50) return "Texto insuficiente para resumir.";
-    
-    try {
-        const result = await summarizer(fullText, { max_length: 100, min_length: 30 });
-        return result[0].summary_text;
-    } catch(e) {
-        console.error('Error generando resumen:', e);
-        return "Error generando resumen.";
-    }
+    console.log('Three.js iniciado');
 }
 
 // ---------- DOM Elements ----------
@@ -141,70 +93,56 @@ let sourceCounts = { twitter: 0, reddit: 0, github: 0, iptv: 0, hn: 0, arxiv: 0 
 let searchHistory = JSON.parse(localStorage.getItem('reachhub_history') || '[]');
 let achievements = JSON.parse(localStorage.getItem('reachhub_achievements') || '[]');
 
-// ---------- Datasets simulados ----------
+// ---------- Datasets ----------
 const datasets = {
     twitter: [
-        { title: "Nuevo modelo de IA supera a GPT-4", content: "Investigadores presentan arquitectura revolucionaria con 1M de contexto. Los resultados superan todas las expectativas.", url: "#", author: "@aiscientist" },
-        { title: "Rust 2026: Lo que viene en el nuevo release", content: "Mejoras en compilación asíncrona y nuevo borrow checker. La comunidad está entusiasmada.", url: "#", author: "@rustlang" },
-        { title: "Seguridad en IA: El nuevo estándar NIST", content: "Guías para implementar sistemas de IA seguros y confiables. Obligatorio para empresas.", url: "#", author: "@NIST" }
+        { title: "Nuevo modelo de IA supera a GPT-4", content: "Investigadores presentan arquitectura revolucionaria con 1M de contexto.", author: "@aiscientist" },
+        { title: "Rust 2026: Lo que viene en el nuevo release", content: "Mejoras en compilación asíncrona y nuevo borrow checker.", author: "@rustlang" },
+        { title: "Seguridad en IA: El nuevo estándar NIST", content: "Guías para implementar sistemas de IA seguros y confiables.", author: "@NIST" }
     ],
     reddit: [
-        { title: "AMA con el equipo de Anthropic", content: "Preguntas y respuestas sobre Claude 4 y seguridad en IA. Muy interesante la sección de preguntas.", subreddit: "r/MachineLearning", score: 2456 },
-        { title: "Mi experiencia con Local LLMs", content: "Guía para ejecutar modelos de 70B en una GPU de 24GB. Resultados sorprendentes.", subreddit: "r/LocalLLaMA", score: 1892 },
-        { title: "Discusión sobre AGI", content: "¿Estamos más cerca de la inteligencia artificial general? Debate muy interesante.", subreddit: "r/singularity", score: 3421 }
+        { title: "AMA con el equipo de Anthropic", content: "Preguntas y respuestas sobre Claude 4 y seguridad en IA.", subreddit: "r/MachineLearning", score: 2456 },
+        { title: "Mi experiencia con Local LLMs", content: "Guía para ejecutar modelos de 70B en una GPU de 24GB.", subreddit: "r/LocalLLaMA", score: 1892 },
+        { title: "Discusión sobre AGI", content: "¿Estamos más cerca de la inteligencia artificial general?", subreddit: "r/singularity", score: 3421 }
     ],
     github: [
-        { title: "llama.cpp", content: "Inferencia de LLMs en CPU, 15k+ estrellas esta semana. Muy activo el repositorio.", stars: 15200, language: "C++" },
-        { title: "transformers.js", content: "Transformers en el navegador, nueva versión 4.2.0. Ahora con más modelos.", stars: 8900, language: "JavaScript" },
-        { title: "axum", content: "Framework web para Rust, tendencia en backend. Muy bien documentado.", stars: 5600, language: "Rust" }
+        { title: "llama.cpp", content: "Inferencia de LLMs en CPU, 15k+ estrellas esta semana.", stars: 15200, language: "C++" },
+        { title: "transformers.js", content: "Transformers en el navegador, nueva versión.", stars: 8900, language: "JavaScript" },
+        { title: "axum", content: "Framework web para Rust, tendencia en backend.", stars: 5600, language: "Rust" }
     ],
     iptv: [
-        { title: "Live: AI Conference 2026", content: "Streaming en vivo de la conferencia principal. Participan los mejores expertos.", viewers: "12.5k", quality: "4K" },
-        { title: "Tutorial: Construye tu propio agente IA", content: "Stream en vivo con código en Rust. Aprende desde cero.", viewers: "3.2k", quality: "HD" },
-        { title: "Debate: Ética en IA", content: "Panel de expertos discutiendo regulaciones. Muy interesante.", viewers: "8.7k", quality: "HD" }
+        { title: "Live: AI Conference 2026", content: "Streaming en vivo de la conferencia principal.", viewers: "12.5k", quality: "4K" },
+        { title: "Tutorial: Construye tu propio agente IA", content: "Stream en vivo con código en Rust.", viewers: "3.2k", quality: "HD" },
+        { title: "Debate: Ética en IA", content: "Panel de expertos discutiendo regulaciones.", viewers: "8.7k", quality: "HD" }
     ],
     hn: [
-        { title: "Show HN: Framework de agentes autónomos", content: "Nueva herramienta para orquestar agentes de IA. Código abierto.", score: 567, comments: 89 },
-        { title: "La evolución de WebAssembly", content: "Análisis del estado actual y futuro de WASM. Muy completo.", score: 423, comments: 56 },
-        { title: "OpenAI anuncia nueva API", content: "Reducción de precios y nuevos modelos. Impacto en la industria.", score: 892, comments: 234 }
+        { title: "Show HN: Framework de agentes autónomos", content: "Nueva herramienta para orquestar agentes de IA.", score: 567, comments: 89 },
+        { title: "La evolución de WebAssembly", content: "Análisis del estado actual y futuro de WASM.", score: 423, comments: 56 },
+        { title: "OpenAI anuncia nueva API", content: "Reducción de precios y nuevos modelos.", score: 892, comments: 234 }
     ],
     arxiv: [
-        { title: "Attention Is All You Need Revisited", content: "Nuevo paper sobre arquitecturas transformer. Mejoras significativas.", authors: "Vaswani et al.", date: "2026-06-10" },
-        { title: "RAG con memoria a largo plazo", content: "Mejoras en sistemas de recuperación aumentada. Resultados prometedores.", authors: "Chen et al.", date: "2026-06-09" },
-        { title: "Eficiencia energética en LLMs", content: "Métodos para reducir consumo en inferencia. Hasta 40% de ahorro.", authors: "Zhang et al.", date: "2026-06-08" }
+        { title: "Attention Is All You Need Revisited", content: "Nuevo paper sobre arquitecturas transformer.", authors: "Vaswani et al.", date: "2026-06-10" },
+        { title: "RAG con memoria a largo plazo", content: "Mejoras en sistemas de recuperación aumentada.", authors: "Chen et al.", date: "2026-06-09" },
+        { title: "Eficiencia energética en LLMs", content: "Métodos para reducir consumo en inferencia.", authors: "Zhang et al.", date: "2026-06-08" }
     ]
 };
 
-function getRandomItemFromSource(source, searchTerm) {
+function getRandomItem(source) {
     const items = datasets[source];
-    if (!items || items.length === 0) return null;
+    if (!items) return null;
     const randomIndex = Math.floor(Math.random() * items.length);
     return { ...items[randomIndex] };
 }
 
-function formatResult(item, source, searchTerm) {
-    let content = '';
+function formatResult(item, source) {
     let meta = '';
-    if (source === 'twitter') {
-        content = item.content;
-        meta = `🐦 ${item.author} · ${Math.floor(Math.random() * 100)} min`;
-    } else if (source === 'reddit') {
-        content = item.content;
-        meta = `📚 ${item.subreddit} · ⬆️ ${item.score}`;
-    } else if (source === 'github') {
-        content = item.content;
-        meta = `🐙 ⭐ ${item.stars} · ${item.language}`;
-    } else if (source === 'iptv') {
-        content = item.content;
-        meta = `📺 ${item.viewers} espectadores · ${item.quality}`;
-    } else if (source === 'hn') {
-        content = item.content;
-        meta = `🔥 🗳️ ${item.score} · 💬 ${item.comments}`;
-    } else if (source === 'arxiv') {
-        content = item.content;
-        meta = `📄 ${item.authors} · ${item.date}`;
-    }
-    return { title: item.title, content, meta, source };
+    if (source === 'twitter') meta = `🐦 ${item.author} · ${Math.floor(Math.random() * 100)} min`;
+    else if (source === 'reddit') meta = `📚 ${item.subreddit} · ⬆️ ${item.score}`;
+    else if (source === 'github') meta = `🐙 ⭐ ${item.stars} · ${item.language}`;
+    else if (source === 'iptv') meta = `📺 ${item.viewers} espectadores · ${item.quality}`;
+    else if (source === 'hn') meta = `🔥 🗳️ ${item.score} · 💬 ${item.comments}`;
+    else if (source === 'arxiv') meta = `📄 ${item.authors} · ${item.date}`;
+    return { title: item.title, content: item.content, meta, source };
 }
 
 function addResultCard(result) {
@@ -220,13 +158,11 @@ function addResultCard(result) {
         <div class="result-meta">${result.meta}</div>
     `;
     resultsContainer.appendChild(card);
-    card.classList.add('streaming');
-    setTimeout(() => card.classList.remove('streaming'), 300);
 }
 
 function updateStats() {
     totalItemsSpan.innerText = totalItems;
-    let activeSources = Object.values(sourceCounts).filter(v => v > 0).length;
+    const activeSources = Object.values(sourceCounts).filter(v => v > 0).length;
     activeSourcesSpan.innerText = activeSources;
     updateRadarChart();
     updateActivityChart();
@@ -279,18 +215,17 @@ function updateWordcloud() {
     const freq = {};
     words.forEach(w => { if(w.length > 3) freq[w] = (freq[w] || 0) + 1; });
     const sorted = Object.entries(freq).sort((a,b) => b[1] - a[1]).slice(0, 20);
-    wordcloudContainer.innerHTML = sorted.map(([word, count]) => `<span style="font-size: ${12 + count * 4}px; margin:4px; display:inline-block; color: var(--accent-glow-1);">${word}</span>`).join('');
+    wordcloudContainer.innerHTML = sorted.map(([word, count]) => `<span style="font-size: ${12 + count * 4}px; margin:4px; display:inline-block; color: #00e5ff;">${word}</span>`).join('');
 }
 
-async function updateSummary() {
+function updateSummary() {
     if (currentResults.length === 0) {
         summaryBox.classList.add('hidden');
         return;
     }
     summaryBox.classList.remove('hidden');
-    const texts = currentResults.map(r => r.content);
-    const result = await generateSummary(texts);
-    summaryText.innerText = result;
+    const texts = currentResults.map(r => r.content).join('. ').substring(0, 500);
+    summaryText.innerText = `Resumen de ${currentResults.length} resultados: ${texts.substring(0, 200)}...`;
 }
 
 function checkAchievements() {
@@ -308,14 +243,12 @@ function checkAchievements() {
         achievements.push(...newAchievements);
         localStorage.setItem('reachhub_achievements', JSON.stringify(achievements));
         renderAchievements();
-        achievementsContainer.classList.add('achievement-unlocked');
-        setTimeout(() => achievementsContainer.classList.remove('achievement-unlocked'), 500);
     }
 }
 
 function renderAchievements() {
     if (achievements.length === 0) {
-        achievementsContainer.innerHTML = '// Sin logros todavía. ¡Sigue extrayendo datos!';
+        achievementsContainer.innerHTML = '// Sin logros todavía';
         return;
     }
     achievementsContainer.innerHTML = achievements.map(a => `<div class="achievement-badge">${a.name}</div>`).join('');
@@ -351,10 +284,10 @@ function shareSearch() {
     const url = new URL(window.location.href);
     url.searchParams.set('q', currentSearchTerm);
     navigator.clipboard.writeText(url.href);
-    alert('Enlace copiado al portapapeles');
+    alert('Enlace copiado');
 }
 
-// ---------- Extracción Simulada ----------
+// ---------- Extracción ----------
 function startExtraction() {
     const term = searchInput.value.trim();
     if (!term) return;
@@ -373,28 +306,25 @@ function startExtraction() {
     searchBtn.style.display = 'none';
     cancelBtn.style.display = 'inline-block';
     const speed = parseInt(speedSlider.value);
-    let speedText = 'Rápida';
-    if (speed > 300) speedText = 'Lenta';
-    else if (speed > 150) speedText = 'Normal';
-    speedValue.innerText = speedText;
+    speedValue.innerText = speed > 300 ? 'Lenta' : (speed > 150 ? 'Normal' : 'Rápida');
     
     const activeSources = [];
     document.querySelectorAll('.source-filter:checked').forEach(cb => {
         activeSources.push(cb.dataset.source);
     });
     
-    extractionInterval = setInterval(async () => {
+    extractionInterval = setInterval(() => {
         if (activeSources.length === 0) return;
         const randomSource = activeSources[Math.floor(Math.random() * activeSources.length)];
-        const item = getRandomItemFromSource(randomSource, term);
+        const item = getRandomItem(randomSource);
         if (item) {
-            const formatted = formatResult(item, randomSource, term);
+            const formatted = formatResult(item, randomSource);
             currentResults.push(formatted);
             totalItems++;
             sourceCounts[randomSource]++;
             updateStats();
             addResultCard(formatted);
-            await updateSummary();
+            updateSummary();
         }
     }, speed);
 }
@@ -406,15 +336,12 @@ function stopExtraction() {
     cancelBtn.style.display = 'none';
 }
 
-// ---------- Export Functions ----------
+// ---------- Export ----------
 function exportMarkdown() {
-    let md = `# AXIOM REACH-HUB - Resultados para "${currentSearchTerm}"\n\n`;
-    md += `- **Fecha:** ${new Date().toLocaleString()}\n- **Items extraídos:** ${totalItems}\n\n`;
-    md += `## Resultados\n\n`;
+    let md = `# AXIOM REACH-HUB - "${currentSearchTerm}"\n\n`;
+    md += `Fecha: ${new Date().toLocaleString()}\nItems: ${totalItems}\n\n`;
     currentResults.forEach(r => {
-        md += `### ${r.title}\n`;
-        md += `**Fuente:** ${r.source.toUpperCase()}\n`;
-        md += `${r.content}\n\n`;
+        md += `## ${r.title}\n**${r.source.toUpperCase()}**\n${r.content}\n\n`;
     });
     const blob = new Blob([md], { type: 'text/markdown' });
     const a = document.createElement('a');
@@ -424,7 +351,7 @@ function exportMarkdown() {
 }
 
 function exportJSON() {
-    const data = { term: currentSearchTerm, date: new Date().toISOString(), results: currentResults, stats: sourceCounts };
+    const data = { term: currentSearchTerm, date: new Date(), results: currentResults, stats: sourceCounts };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -433,41 +360,29 @@ function exportJSON() {
 }
 
 function copyAllResults() {
-    const text = currentResults.map(r => `${r.source.toUpperCase()}: ${r.title}\n${r.content}\n`).join('\n---\n\n');
+    const text = currentResults.map(r => `${r.source.toUpperCase()}: ${r.title}\n${r.content}`).join('\n\n');
     navigator.clipboard.writeText(text);
-    alert('Resultados copiados al portapapeles');
+    alert('Copiado');
 }
 
-// ---------- Voice Search ----------
+// ---------- Voice ----------
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 if (SpeechRecognition) {
     const recognition = new SpeechRecognition();
     recognition.lang = 'es-ES';
-    document.getElementById('voiceBtn').onclick = () => {
-        recognition.start();
-    };
-    recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        searchInput.value = transcript;
+    document.getElementById('voiceBtn').onclick = () => recognition.start();
+    recognition.onresult = (e) => {
+        searchInput.value = e.results[0][0].transcript;
         startExtraction();
     };
 } else {
     const voiceBtn = document.getElementById('voiceBtn');
-    if (voiceBtn) {
-        voiceBtn.style.opacity = '0.5';
-        voiceBtn.title = 'Web Speech API no soportada';
-    }
+    if (voiceBtn) voiceBtn.style.opacity = '0.5';
 }
 
 // ---------- Event Listeners ----------
 searchBtn.addEventListener('click', startExtraction);
 cancelBtn.addEventListener('click', stopExtraction);
-speedSlider.addEventListener('input', (e) => {
-    const val = parseInt(e.target.value);
-    if (val > 300) speedValue.innerText = 'Lenta';
-    else if (val > 150) speedValue.innerText = 'Normal';
-    else speedValue.innerText = 'Rápida';
-});
 document.getElementById('exportMarkdownBtn').addEventListener('click', exportMarkdown);
 document.getElementById('exportJsonBtn').addEventListener('click', exportJSON);
 document.getElementById('copyAllBtn').addEventListener('click', copyAllResults);
@@ -477,6 +392,8 @@ document.getElementById('clearHistoryBtn').addEventListener('click', () => {
     renderHistory();
 });
 document.getElementById('shareSearchBtn').addEventListener('click', shareSearch);
+document.getElementById('kioskBtn').onclick = () => document.documentElement.requestFullscreen();
+document.getElementById('tourBtn').onclick = () => alert('🔍 Tutorial: 1. Busca, 2. Extrae, 3. Exporta');
 
 // View toggle
 let currentView = 'grid';
@@ -489,7 +406,7 @@ document.querySelectorAll('.view-btn').forEach(btn => {
     });
 });
 
-// Tema oscuro/claro
+// Theme toggle
 const themeToggle = document.getElementById('themeToggle');
 const htmlTag = document.documentElement;
 themeToggle.addEventListener('click', () => {
@@ -498,13 +415,7 @@ themeToggle.addEventListener('click', () => {
     themeToggle.innerText = isDark ? '☀️' : '🌙';
 });
 
-// Modo kiosco
-document.getElementById('kioskBtn').onclick = () => document.documentElement.requestFullscreen();
-
-// Tutorial
-document.getElementById('tourBtn').onclick = () => alert('🔍 Tutorial:\n1. Introduce un término de búsqueda\n2. Selecciona las fuentes\n3. Haz clic en EXTRaer\n4. Los resultados aparecerán en tiempo real\n5. IA resumirá automáticamente\n6. Exporta a MD/JSON o copia todo');
-
-// Inicialización
+// Inicio
 function loadFromURL() {
     const params = new URLSearchParams(window.location.search);
     const q = params.get('q');
@@ -516,11 +427,9 @@ function loadFromURL() {
     }
 }
 
-// Iniciar Three.js y cargar el modelo de IA
 initThree();
-loadSummarizer();
 renderAchievements();
 renderHistory();
 loadFromURL();
 
-console.log('✅ AXIOM REACH-HUB UI inicializado con Three.js y Transformers.js');
+console.log('AXIOM REACH-HUB iniciado');
