@@ -13,29 +13,22 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/addons.css">
     
-    <!-- Import Maps para Three.js -->
+    <!-- Import Maps para Three.js y Transformers.js -->
     <script type="importmap">
         {
             "imports": {
                 "three": "https://unpkg.com/three@0.184.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.184.0/examples/jsm/"
-            }
-        }
-    </script>
-    
-    <!-- TensorFlow.js -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0"></script>
-    
-    <!-- Transformers.js -->
-    <script type="importmap">
-        {
-            "imports": {
+                "three/addons/": "https://unpkg.com/three@0.184.0/examples/jsm/",
                 "@xenova/transformers": "https://cdn.jsdelivr.net/npm/@xenova/transformers@4.2.0"
             }
         }
     </script>
+    
+    <!-- TensorFlow.js (CDN normal) -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0"></script>
 </head>
 <body>
+    <div id="three-container" style="position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none;"></div>
     <div class="blob1"></div>
     <div class="blob2"></div>
     
@@ -100,10 +93,11 @@
         <!-- Contenedor de resultados -->
         <div id="resultsContainer" class="results-grid"></div>
         
-        <!-- IA Resumen -->
+        <!-- IA Resumen (Transformers.js) -->
         <div id="summaryBox" class="glass-card hidden">
             <h3>🧠 Resumen IA (Transformers.js)</h3>
-            <div id="summaryText">Analizando resultados...</div>
+            <div id="summaryText">Cargando modelo de IA para resumir resultados...</div>
+            <div class="progress-bar" id="summaryProgress" style="display:none;"><div class="progress-fill" style="width:0%"></div></div>
         </div>
         
         <!-- Gráficos avanzados -->
@@ -144,12 +138,12 @@
         <div class="premium-locked">
             <h3>🔒 AXIOM Reach-Hub Enterprise</h3>
             <p>¿Necesitas extracción real, integración con APIs o motor en Rust? Contáctanos.</p>
-            <a href="https://manuelaxiomsystems.gumroad.com/" target="_blank" class="btn-premium">💼 Comprar pack completo (40€) →</a>
+            <a href="https://manuelaxiomsystems.gumroad.com/" target="_blank" class="btn-premium">💼 Comprar pack completo (39.99€) →</a>
             <a href="https://www.patreon.com/user?u=216392735" target="_blank" class="btn-patreon">🤝 Apoyar en Patreon</a>
         </div>
     </main>
     <footer>© 2026 AXIOM SYSTEMS · Simulación local · Tus datos no salen de tu navegador</footer>
     
-    <script src="js/ui.js" type="module"></script>
+    <script type="module" src="js/ui.js"></script>
 </body>
 </html>
