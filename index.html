@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>AXIOM REACH-HUB | Consola de Datos Libres para Agentes</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/addons.css">
+    
+    <!-- Import Maps para Three.js -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.184.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.184.0/examples/jsm/"
+            }
+        }
+    </script>
+    
+    <!-- TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0"></script>
+    
+    <!-- Transformers.js -->
+    <script type="importmap">
+        {
+            "imports": {
+                "@xenova/transformers": "https://cdn.jsdelivr.net/npm/@xenova/transformers@4.2.0"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="blob1"></div>
+    <div class="blob2"></div>
+    
+    <header>
+        <div class="logo">AXIOM SYSTEMS</div>
+        <div class="controls-bar">
+            <button id="kioskBtn">🖥️ Modo Kiosco</button>
+            <button id="tourBtn">🎓 Tutorial</button>
+            <button id="voiceBtn">🎤 Búsqueda por voz</button>
+            <button class="theme-toggle" id="themeToggle">🌙</button>
+        </div>
+    </header>
+    
+    <main>
+        <h1>📡 AXIOM REACH-HUB</h1>
+        <div class="subtitle">Consola de Datos Libres para Agentes. Extrae e indexa contenido de fuentes públicas sin API.</div>
+        
+        <!-- Panel de búsqueda -->
+        <div class="glass-card search-panel">
+            <div class="search-row">
+                <input type="text" id="searchInput" placeholder="🔍 Buscar... ej: 'Rust Lang', 'AI Security'" value="AI Security">
+                <button id="searchBtn" class="primary">🚀 EXTRaer</button>
+                <button id="cancelBtn" class="secondary" style="display:none;">⏹️ Cancelar</button>
+            </div>
+            <div class="filter-row">
+                <div class="source-filters">
+                    <label><input type="checkbox" class="source-filter" data-source="twitter" checked> 🐦 Twitter</label>
+                    <label><input type="checkbox" class="source-filter" data-source="reddit" checked> 📚 Reddit</label>
+                    <label><input type="checkbox" class="source-filter" data-source="github" checked> 🐙 GitHub</label>
+                    <label><input type="checkbox" class="source-filter" data-source="iptv" checked> 📺 IPTV</label>
+                    <label><input type="checkbox" class="source-filter" data-source="hn" checked> 🔥 Hacker News</label>
+                    <label><input type="checkbox" class="source-filter" data-source="arxiv" checked> 📄 ArXiv</label>
+                </div>
+                <div class="speed-control">
+                    <span>⚡ Velocidad: </span>
+                    <input type="range" id="speedSlider" min="50" max="500" value="150">
+                    <span id="speedValue">Normal</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Estadísticas -->
+        <div class="stats-bar">
+            <div class="stat-pill"><i class="fa-solid fa-database"></i> <span id="totalItems">0</span> items extraídos</div>
+            <div class="stat-pill"><i class="fa-solid fa-chart-line"></i> <span id="activeSources">0</span> fuentes activas</div>
+            <div class="stat-pill"><i class="fa-solid fa-clock"></i> <span id="lastSearch">—</span> última búsqueda</div>
+        </div>
+        
+        <!-- Vista tarjetas/lista -->
+        <div class="toolbar">
+            <div class="view-toggle" id="viewToggle">
+                <button class="view-btn active" data-view="grid">📱 Tarjetas</button>
+                <button class="view-btn" data-view="list">📋 Lista</button>
+            </div>
+            <div class="export-buttons">
+                <button id="exportMarkdownBtn">📝 Exportar MD</button>
+                <button id="exportJsonBtn">📊 Exportar JSON</button>
+                <button id="copyAllBtn">📋 Copiar todo</button>
+            </div>
+        </div>
+        
+        <!-- Contenedor de resultados -->
+        <div id="resultsContainer" class="results-grid"></div>
+        
+        <!-- IA Resumen -->
+        <div id="summaryBox" class="glass-card hidden">
+            <h3>🧠 Resumen IA (Transformers.js)</h3>
+            <div id="summaryText">Analizando resultados...</div>
+        </div>
+        
+        <!-- Gráficos avanzados -->
+        <div class="charts-row">
+            <div class="glass-card half">
+                <h3>📈 Actividad de extracción</h3>
+                <canvas id="activityChart" width="300" height="150" style="width:100%; height:150px;"></canvas>
+            </div>
+            <div class="glass-card half">
+                <h3>🗣️ Nube de palabras clave</h3>
+                <div id="wordcloudContainer" style="min-height: 150px;">// Palabras clave aparecerán aquí</div>
+            </div>
+        </div>
+        
+        <!-- Gráfico radar de fuentes -->
+        <div class="glass-card">
+            <h3>📡 Radar de fuentes</h3>
+            <canvas id="radarCanvas" width="400" height="300" style="width:100%; max-width:400px; margin:0 auto; display:block;"></canvas>
+        </div>
+        
+        <!-- Historial -->
+        <div class="glass-card">
+            <h3>📜 Historial de búsquedas</h3>
+            <div id="historyList">// No hay búsquedas recientes</div>
+            <div class="flex-row">
+                <button id="clearHistoryBtn">🗑️ Borrar historial</button>
+                <button id="shareSearchBtn">🔗 Compartir búsqueda</button>
+            </div>
+        </div>
+        
+        <!-- Logros -->
+        <div class="glass-card">
+            <h3>🏆 Logros</h3>
+            <div id="achievementsContainer" class="achievements-grid">// Sin logros todavía</div>
+        </div>
+        
+        <!-- Sección premium -->
+        <div class="premium-locked">
+            <h3>🔒 AXIOM Reach-Hub Enterprise</h3>
+            <p>¿Necesitas extracción real, integración con APIs o motor en Rust? Contáctanos.</p>
+            <a href="https://manuelaxiomsystems.gumroad.com/" target="_blank" class="btn-premium">💼 Comprar pack completo (40€) →</a>
+            <a href="https://www.patreon.com/user?u=216392735" target="_blank" class="btn-patreon">🤝 Apoyar en Patreon</a>
+        </div>
+    </main>
+    <footer>© 2026 AXIOM SYSTEMS · Simulación local · Tus datos no salen de tu navegador</footer>
+    
+    <script src="js/ui.js" type="module"></script>
+</body>
+</html>

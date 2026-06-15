@@ -1,0 +1,121 @@
+/* ============================================
+   AXIOM REACH-HUB - ADDONS
+   ============================================ */
+
+/* Animación de carga */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color);
+    border-top-color: var(--accent-glow-1);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Efecto streaming para nuevos resultados */
+@keyframes streamIn {
+    0% {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.result-card.streaming {
+    animation: streamIn 0.3s ease-out;
+}
+
+/* Barra de progreso de extracción */
+.progress-bar {
+    height: 4px;
+    background: var(--code-bg);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 12px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-glow-1), var(--accent-glow-2));
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 2px;
+}
+
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--code-bg);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--accent-glow-1);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-glow-2);
+}
+
+/* Efecto glitch para el título (opcional) */
+@keyframes glitch {
+    0%, 100% { transform: skew(0deg, 0deg); }
+    20% { transform: skew(2deg, 1deg); }
+    40% { transform: skew(-2deg, -1deg); }
+    60% { transform: skew(1deg, 2deg); }
+    80% { transform: skew(-1deg, -2deg); }
+}
+
+.glitch-text {
+    animation: glitch 0.3s ease;
+}
+
+/* Logro desbloqueado */
+.achievement-unlocked {
+    animation: achievementFlash 0.5s ease;
+}
+
+@keyframes achievementFlash {
+    0% { transform: scale(1); background: var(--accent-success); color: #000; }
+    100% { transform: scale(1); }
+}
+
+/* Tooltip */
+.tooltip {
+    position: relative;
+    cursor: help;
+}
+
+.tooltip:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--code-bg);
+    color: var(--text-main);
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 10px;
+    white-space: nowrap;
+    z-index: 100;
+    border: 1px solid var(--border-color);
+}

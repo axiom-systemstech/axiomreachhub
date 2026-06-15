@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://axiom-systemstech.github.io/axiomreachhub/sitemap.xml
