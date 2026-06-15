@@ -13,18 +13,17 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/addons.css">
     
-    <!-- Import Maps para Three.js y Transformers.js -->
+    <!-- Import Maps para Three.js -->
     <script type="importmap">
         {
             "imports": {
                 "three": "https://unpkg.com/three@0.184.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.184.0/examples/jsm/",
-                "@xenova/transformers": "https://cdn.jsdelivr.net/npm/@xenova/transformers@4.2.0"
+                "three/addons/": "https://unpkg.com/three@0.184.0/examples/jsm/"
             }
         }
     </script>
     
-    <!-- TensorFlow.js (CDN normal) -->
+    <!-- TensorFlow.js -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.22.0"></script>
 </head>
 <body>
@@ -46,7 +45,6 @@
         <h1>📡 AXIOM REACH-HUB</h1>
         <div class="subtitle">Consola de Datos Libres para Agentes. Extrae e indexa contenido de fuentes públicas sin API.</div>
         
-        <!-- Panel de búsqueda -->
         <div class="glass-card search-panel">
             <div class="search-row">
                 <input type="text" id="searchInput" placeholder="🔍 Buscar... ej: 'Rust Lang', 'AI Security'" value="AI Security">
@@ -70,14 +68,12 @@
             </div>
         </div>
         
-        <!-- Estadísticas -->
         <div class="stats-bar">
             <div class="stat-pill"><i class="fa-solid fa-database"></i> <span id="totalItems">0</span> items extraídos</div>
             <div class="stat-pill"><i class="fa-solid fa-chart-line"></i> <span id="activeSources">0</span> fuentes activas</div>
             <div class="stat-pill"><i class="fa-solid fa-clock"></i> <span id="lastSearch">—</span> última búsqueda</div>
         </div>
         
-        <!-- Vista tarjetas/lista -->
         <div class="toolbar">
             <div class="view-toggle" id="viewToggle">
                 <button class="view-btn active" data-view="grid">📱 Tarjetas</button>
@@ -90,17 +86,13 @@
             </div>
         </div>
         
-        <!-- Contenedor de resultados -->
         <div id="resultsContainer" class="results-grid"></div>
         
-        <!-- IA Resumen (Transformers.js) -->
         <div id="summaryBox" class="glass-card hidden">
-            <h3>🧠 Resumen IA (Transformers.js)</h3>
-            <div id="summaryText">Cargando modelo de IA para resumir resultados...</div>
-            <div class="progress-bar" id="summaryProgress" style="display:none;"><div class="progress-fill" style="width:0%"></div></div>
+            <h3>🧠 Resumen de resultados</h3>
+            <div id="summaryText">Los resultados se resumirán automáticamente...</div>
         </div>
         
-        <!-- Gráficos avanzados -->
         <div class="charts-row">
             <div class="glass-card half">
                 <h3>📈 Actividad de extracción</h3>
@@ -112,13 +104,11 @@
             </div>
         </div>
         
-        <!-- Gráfico radar de fuentes -->
         <div class="glass-card">
             <h3>📡 Radar de fuentes</h3>
             <canvas id="radarCanvas" width="400" height="300" style="width:100%; max-width:400px; margin:0 auto; display:block;"></canvas>
         </div>
         
-        <!-- Historial -->
         <div class="glass-card">
             <h3>📜 Historial de búsquedas</h3>
             <div id="historyList">// No hay búsquedas recientes</div>
@@ -128,13 +118,11 @@
             </div>
         </div>
         
-        <!-- Logros -->
         <div class="glass-card">
             <h3>🏆 Logros</h3>
             <div id="achievementsContainer" class="achievements-grid">// Sin logros todavía</div>
         </div>
         
-        <!-- Sección premium -->
         <div class="premium-locked">
             <h3>🔒 AXIOM Reach-Hub Enterprise</h3>
             <p>¿Necesitas extracción real, integración con APIs o motor en Rust? Contáctanos.</p>
